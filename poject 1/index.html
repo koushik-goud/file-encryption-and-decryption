@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureFile - Encryption & Decryption Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { background-position: 200% 0; }
+            50% { background-position: -200% 0; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .mode-selector {
+            display: flex;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 4px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: #666;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: block;
+            cursor: pointer;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        .file-input-wrapper:hover {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .file-input-wrapper.dragover {
+            border-color: #667eea;
+            background: #f0f3ff;
+            transform: scale(1.02);
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .file-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #e8f2ff;
+            border-radius: 20px;
+            color: #667eea;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            border-radius: 2px;
+            background: #f0f0f0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .strength-bar {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .strength-weak { background: #ff4757; width: 25%; }
+        .strength-fair { background: #ffa502; width: 50%; }
+        .strength-good { background: #2ed573; width: 75%; }
+        .strength-strong { background: #5352ed; width: 100%; }
+
+        .process-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .process-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            margin-top: 25px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .result {
+            margin-top: 30px;
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+        }
+
+        .result-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .result-text {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .download-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .info-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .feature-icon {
+            font-size: 20px;
+            margin-right: 10px;
+        }
+
+        .feature span:last-child {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .error-message {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            color: #e53e3e;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+            }
+            
+            .mode-btn {
+                margin-bottom: 5px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .progress-container {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔐</div>
+            <h1>SecureFile</h1>
+            <p class="subtitle">Protect your files with military-grade encryption</p>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="setMode('encrypt')">
+                🔒 Encrypt
+            </button>
+            <button class="mode-btn" onclick="setMode('decrypt')">
+                🔓 Decrypt
+            </button>
+        </div>
+
+        <form id="fileForm">
+            <div class="form-group">
+                <label for="fileInput">Select File:</label>
+                <div class="file-input-wrapper" id="fileDropZone">
+                    <input type="file" id="fileInput" class="file-input" accept="*/*">
+                    <div class="file-icon">📁</div>
+                    <div class="file-text">
+                        Click to select a file or drag & drop here
+                    </div>
+                    <div id="fileName" class="file-name" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" placeholder="Enter a strong password" required>
+                <div class="password-strength" id="passwordStrength"></div>
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <button type="submit" class="process-btn" id="processBtn">
+                🔒 Encrypt File
+            </button>
+        </form>
+
+        <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">Processing...</div>
+        </div>
+
+        <div class="result" id="result" style="display: none;">
+            <div class="result-icon" id="resultIcon">✅</div>
+            <div class="result-text" id="resultText"></div>
+            <button class="download-btn" id="downloadBtn" style="display: none;">
+                📥 Download File
+            </button>
+        </div>
+
+        <div class="info-section">
+            <h3>🛡️ Security Features</h3>
+            <div class="features">
+                <div class="feature">
+                    <span class="feature-icon">🔐</span>
+                    <span>AES-256 Encryption</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🔑</span>
+                    <span>Password-Based Protection</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">🚫</span>
+                    <span>No Data Stored Online</span>
+                </div>
+                <div class="feature">
+                    <span class="feature-icon">⚡</span>
+                    <span>Client-Side Processing</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        // Global variables
+        let currentMode = 'encrypt';
+        let selectedFile = null;
+        let processedFile = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔐 SecureFile initialized successfully');
+            initializeEventListeners();
+            setupDragAndDrop();
+            
+            // Check if CryptoJS loaded properly
+            if (typeof CryptoJS === 'undefined') {
+                showError('Failed to load encryption library. Please refresh the page.');
+            }
+        });
+
+        // Initialize all event listeners
+        function initializeEventListeners() {
+            const fileInput = document.getElementById('fileInput');
+            const passwordInput = document.getElementById('password');
+            const form = document.getElementById('fileForm');
+
+            fileInput.addEventListener('change', handleFileSelect);
+            passwordInput.addEventListener('input', checkPasswordStrength);
+            form.addEventListener('submit', handleFormSubmit);
+        }
+
+        // Set up drag and drop functionality
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('fileDropZone');
+
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+            dropZone.addEventListener('drop', handleDrop);
+        }
+
+        // Handle drag events
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.closest('.file-input-wrapper').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            const wrapper = e.target.closest('.file-input-wrapper');
+            if (wrapper && !wrapper.contains(e.relatedTarget)) {
+                wrapper.classList.remove('dragover');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropZone = e.target.closest('.file-input-wrapper');
+            dropZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                displayFileName(selectedFile.name);
+                hideError();
+            }
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                displayFileName(selectedFile.name);
+                hideError();
+            }
+        }
+
+        // Display selected file name
+        function displayFileName(fileName) {
+            const fileNameElement = document.getElementById('fileName');
+            fileNameElement.textContent = `📄 ${fileName}`;
+            fileNameElement.style.display = 'inline-block';
+        }
+
+        // Set encryption/decryption mode
+        function setMode(mode) {
+            currentMode = mode;
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const processBtn = document.getElementById('processBtn');
+            
+            // Find and activate the clicked button
+            modeButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes(mode === 'encrypt' ? 'Encrypt' : 'Decrypt')) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            if (mode === 'encrypt') {
+                processBtn.innerHTML = '🔒 Encrypt File';
+            } else {
+                processBtn.innerHTML = '🔓 Decrypt File';
+            }
+            
+            // Reset result display
+            document.getElementById('result').style.display = 'none';
+            hideError();
+        }
+
+        // Check password strength
+        function checkPasswordStrength(e) {
+            const password = e.target.value;
+            const strengthElement = document.getElementById('passwordStrength');
+            
+            if (password.length === 0) {
+                strengthElement.innerHTML = '';
+                return;
+            }
+            
+            let strength = 'weak';
+            let score = 0;
+            
+            // Check password criteria
+            if (password.length >= 8) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+            
+            if (score >= 4) strength = 'strong';
+            else if (score >= 3) strength = 'good';
+            else if (score >= 2) strength = 'fair';
+            
+            strengthElement.innerHTML = `<div class="strength-bar strength-${strength}"></div>`;
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+
+        // Hide error message
+        function hideError() {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.display = 'none';
+        }
+
+        // Handle form submission
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            hideError();
+            
+            if (!selectedFile) {
+                showError('Please select a file first.');
+                return;
+            }
+            
+            const password = document.getElementById('password').value;
+            if (!password) {
+                showError('Please enter a password.');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('Password must be at least 6 characters long.');
+                return;
+            }
+            
+            // Check if trying to decrypt a non-encrypted file
+            if (currentMode === 'decrypt' && !selectedFile.name.endsWith('.encrypted')) {
+                showError('Please select an encrypted file (.encrypted extension).');
+                return;
+            }
+            
+            // Show progress
+            showProgress();
+            
+            try {
+                if (currentMode === 'encrypt') {
+                    await encryptFile(selectedFile, password);
+                } else {
+                    await decryptFile(selectedFile, password);
+                }
+            } catch (error) {
+                console.error('Processing error:', error);
+                hideProgress();
+                showResult(false, error.message);
+            }
+        }
+
+        // Show progress indicator
+        function showProgress() {
+            const progressContainer = document.getElementById('progressContainer');
+            const processBtn = document.getElementById('processBtn');
+            
+            progressContainer.style.display = 'block';
+            processBtn.disabled = true;
+            
+            // Animate progress bar
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10 + 5;
+                if (progress > 85) progress = 85;
+                
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = `Processing... ${Math.round(progress)}%`;
+                
+                if (progress >= 85) {
+                    clearInterval(interval);
+                }
+            }, 150);
+            
+            // Store interval ID for cleanup
+            window.progressInterval = interval;
+        }
+
+        // Hide progress indicator
+        function hideProgress() {
+            const progressContainer = document.getElementById('progressContainer');
+            const processBtn = document.getElementById('processBtn');
+            
+            // Clear any running interval
+            if (window.progressInterval) {
+                clearInterval(window.progressInterval);
+                window.progressInterval = null;
+            }
+            
+            progressContainer.style.display = 'none';
+            processBtn.disabled = false;
+            
+            // Reset progress
+            document.getElementById('progressFill').style.width = '0%';
+        }
+
+        // Encrypt file
+        async function encryptFile(file, password) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const arrayBuffer = e.target.result;
+                        const uint8Array = new Uint8Array(arrayBuffer);
+                        
+                        // Convert to base64 for encryption
+                        let binary = '';
+                        for (let i = 0; i < uint8Array.length; i++) {
+                            binary += String.fromCharCode(uint8Array[i]);
+                        }
+                        const base64Data = btoa(binary);
+                        
+                        // Create file metadata
+                        const metadata = {
+                            name: file.name,
+                            type: file.type,
+                            size: file.size,
+                            lastModified: file.lastModified,
+                            encrypted: true,
+                            version: '1.0'
+                        };
+                        
+                        // Combine metadata and file data
+                        const dataToEncrypt = {
+                            metadata: metadata,
+                            data: base64Data
+                        };
+                        
+                        // Encrypt the data
+                        const encrypted = CryptoJS.AES.encrypt(
+                            JSON.stringify(dataToEncrypt), 
+                            password,
+                            { mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
+                        ).toString();
+                        
+                        // Create encrypted file blob
+                        const encryptedBlob = new Blob([encrypted], { type: 'text/plain' });
+                        const originalName = file.name.replace(/\.encrypted$/, ''); // Remove if already there
+                        processedFile = new File([encryptedBlob], originalName + '.encrypted', { 
+                            type: 'text/plain' 
+                        });
+                        
+                        // Complete progress
+                        document.getElementById('progressFill').style.width = '100%';
+                        document.getElementById('progressText').textContent = 'Encryption complete!';
+                        
+                        setTimeout(() => {
+                            hideProgress();
+                            showResult(true, `File "${file.name}" has been successfully encrypted!`);
+                            resolve();
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('Encryption error:', error);
+                        reject(new Error('Encryption failed: ' + error.message));
+                    }
+                };
+                
+                reader.onerror = function(error) {
+                    console.error('File read error:', error);
+                    reject(new Error('Failed to read file'));
+                };
+                
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // Decrypt file
+        async function decryptFile(file, password) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const encryptedData = e.target.result;
+                        
+                        if (!encryptedData || encryptedData.trim() === '') {
+                            throw new Error('File appears to be empty or corrupted');
+                        }
+                        
+                        // Decrypt the data
+                        const decryptedBytes = CryptoJS.AES.decrypt(
+                            encryptedData.trim(), 
+                            password,
+                            { mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
+                        );
+                        
+                        const decryptedText = decryptedBytes.toString(CryptoJS.enc.Utf8);
+                        
+                        if (!decryptedText) {
+                            throw new Error('Invalid password or corrupted file');
+                        }
+                        
+                        // Parse decrypted data
+                        const decryptedData = JSON.parse(decryptedText);
+                        
+                        if (!decryptedData.metadata || !decryptedData.data) {
+                            throw new Error('Invalid file format');
+                        }
+                        
+                        const metadata = decryptedData.metadata;
+                        const base64Data = decryptedData.data;
+                        
+                        // Convert from base64 back to binary
+                        const binaryString = atob(base64Data);
+                        const uint8Array = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            uint8Array[i] = binaryString.charCodeAt(i);
+                        }
+                        
+                        // Create decrypted file blob
+                        const decryptedBlob = new Blob([uint8Array], { type: metadata.type });
+                        processedFile = new File([decryptedBlob], metadata.name, { 
+                            type: metadata.type,
+                            lastModified: metadata.lastModified
+                        });
+                        
+                        // Complete progress
+                        document.getElementById('progressFill').style.width = '100%';
+                        document.getElementById('progressText').textContent = 'Decryption complete!';
+                        
+                        setTimeout(() => {
+                            hideProgress();
+                            showResult(true, `File "${metadata.name}" has been successfully decrypted!`);
+                            resolve();
+                        }, 500);
+                        
+                    } catch (error) {
+                        console.error('Decryption error:', error);
+                        if (error.message.includes('Malformed UTF-8')) {
+                            reject(new Error('Invalid password - unable to decrypt file'));
+                        } else {
+                            reject(new Error('Decryption failed: ' + error.message));
+                        }
+                    }
+                };
+                
+                reader.onerror = function(error) {
+                    console.error('File read error:', error);
+                    reject(new Error('Failed to read encrypted file'));
+                };
+                
+                reader.readAsText(file, 'utf-8');
+            });
+        }
+
+        // Show result
+        function showResult(success, message) {
+            const resultElement = document.getElementById('result');
+            const resultIcon = document.getElementById('resultIcon');
+            const resultText = document.getElementById('resultText');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (success) {
+                resultIcon.textContent = '✅';
+                resultElement.style.borderColor = '#28a745';
+                resultElement.style.background = '#f8fff9';
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = downloadProcessedFile;
+            } else {
+                resultIcon.textContent = '❌';
+                resultElement.style.borderColor = '#dc3545';
+                resultElement.style.background = '#fff8f8';
+                downloadBtn.style.display = 'none';
+            }
+            
+            resultText.textContent = message;
+            resultElement.style.display = 'block';
+        }
+
+        // Download processed file
+        function downloadProcessedFile() {
+            if (!processedFile) {
+                showError('No processed file available for download');
+                return;
+            }
+            
+            try {
+                const url = URL.createObjectURL(processedFile);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = processedFile.name;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('File downloaded successfully:', processedFile.name);
+            } catch (error) {
+                console.error('Download error:', error);
+                showError('Failed to download file: ' + error.message);
+            }
+        }
+
+        // Security reminders (displayed in console)
+        console.log('🔐 SecureFile Security Reminders:');
+        console.log('• Always use strong, unique passwords');
+        console.log('• Keep your passwords secure and private');
+        console.log('• This tool processes files locally in your browser');
+        console.log('• No data is sent to external servers');
+        console.log('• Remember your password - it cannot be recovered!');
+    </script>
+</body>
+</html>
